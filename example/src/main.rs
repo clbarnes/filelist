@@ -9,14 +9,14 @@ struct Args {
     recursive: bool,
     #[clap(short, long)]
     sorted: bool,
-    #[clap(short, long)]
-    delimiter: Option<OsString>,
+    #[clap(short = 'd', long)]
+    in_delimiter: Option<OsString>,
     files: Vec<OsString>,
 }
 
 fn main() {
     let args = Args::parse();
-    let delim: Split = args.delimiter.unwrap_or(OsString::from("\n")).try_into().expect("Delimiter must be single-byte character");
+    let delim: Split = args.in_delimiter.unwrap_or(OsString::from("\n")).try_into().expect("Delimiter must be single-byte character");
     let mut walk_opts = None;
     if args.recursive {
         walk_opts = Some(WalkDirOptions::default().sort(args.sorted));
