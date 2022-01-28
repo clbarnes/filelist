@@ -87,6 +87,7 @@ impl<'a> Argument<'a> {
                 }
             }
             Argument::Path(root) => {
+                // todo: more error checking
                 if root.is_file() {
                     out.push(root);
                 } else if let Some(w) = walk_opts {
