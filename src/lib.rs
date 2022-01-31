@@ -1,5 +1,5 @@
-pub use jwalk;
-use jwalk::{Parallelism, WalkDir};
+pub use jwalk::Parallelism;
+use jwalk::WalkDir;
 use std::ffi::OsString;
 use std::io::{BufRead, BufReader, Read, stdin};
 use std::os::unix::ffi::OsStringExt;
@@ -108,14 +108,16 @@ impl<'a> Argument<'a> {
 pub enum Split {
     Newline,
     Null,
+    Tab,
     Other(u8)
 }
 
 impl From<Split> for u8 {
     fn from(split: Split) -> Self {
         match split {
-            Split::Newline => 10,
-            Split::Null => 0,
+            Split::Newline => b'\n',
+            Split::Null => b'\0',
+            Split::Tab => b'\t',
             Split::Other(x) => x,
         }
     }
@@ -126,12 +128,19 @@ impl TryFrom<OsString> for Split {
 
     fn try_from(s: OsString) -> Result<Split, ()> {
         let as_str = s.to_str().ok_or(())?;
+        match as_str {
+            "\\n" => return Ok(Split::Newline),
+            "\\t" => return Ok(Split::Tab),
+            "\\0" => return Ok(Split::Null),
+            _ => {},
+        };
         if as_str.len() != 1 {
             return Err(())
         }
         match as_str.bytes().next().unwrap() {
-            10 => Ok(Split::Newline),
-            0 => Ok(Split::Null),
+            b'\n' => Ok(Split::Newline),
+            b'\0' => Ok(Split::Null),
+            b'\t' => Ok(Split::Tab),
             x => Ok(Split::Other(x)),
         }
     }
