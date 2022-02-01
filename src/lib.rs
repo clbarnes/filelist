@@ -1,7 +1,7 @@
 pub use jwalk::Parallelism;
 use jwalk::WalkDir;
 use std::ffi::OsString;
-use std::io::{BufRead, BufReader, Read, stdin};
+use std::io::{stdin, BufRead, BufReader, Read};
 use std::os::unix::ffi::OsStringExt;
 use std::path::PathBuf;
 
@@ -77,7 +77,7 @@ pub enum Argument<'a> {
 }
 
 impl<'a> Argument<'a> {
-    fn expand(self, split: u8, walk_opts: &Option<WalkDirOptions>) -> Vec<PathBuf> {
+    pub fn expand(self, split: u8, walk_opts: &Option<WalkDirOptions>) -> Vec<PathBuf> {
         let mut out = Vec::default();
         match self {
             Argument::Reader(r) => {
@@ -105,11 +105,12 @@ impl<'a> Argument<'a> {
     }
 }
 
+#[derive(Copy, Clone, Debug)]
 pub enum Split {
     Newline,
     Null,
     Tab,
-    Other(u8)
+    Other(u8),
 }
 
 impl From<Split> for u8 {
@@ -132,10 +133,10 @@ impl TryFrom<OsString> for Split {
             "\\n" => return Ok(Split::Newline),
             "\\t" => return Ok(Split::Tab),
             "\\0" => return Ok(Split::Null),
-            _ => {},
+            _ => {}
         };
         if as_str.len() != 1 {
-            return Err(())
+            return Err(());
         }
         match as_str.bytes().next().unwrap() {
             b'\n' => Ok(Split::Newline),
@@ -158,7 +159,11 @@ pub fn expand_arguments<T: Into<u8>>(
         .collect()
 }
 
-pub fn expand_osstr<T: Into<u8>>(strs: Vec<OsString>, split: T, walk_opts: Option<WalkDirOptions>) -> Vec<PathBuf> {
+pub fn expand_osstr<T: Into<u8>>(
+    strs: Vec<OsString>,
+    split: T,
+    walk_opts: Option<WalkDirOptions>,
+) -> Vec<PathBuf> {
     let dash = OsString::from("-");
     let mut sin_idx: Option<usize> = None;
     let mut args = Vec::with_capacity(strs.len());
@@ -176,7 +181,7 @@ pub fn expand_osstr<T: Into<u8>>(strs: Vec<OsString>, split: T, walk_opts: Optio
         args.insert(sidx, Argument::Reader(Box::new(&mut sin)));
         expand_arguments(args, split, walk_opts)
     } else {
-        expand_arguments(args, split,walk_opts)
+        expand_arguments(args, split, walk_opts)
     }
 }
 
